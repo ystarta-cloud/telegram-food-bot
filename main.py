@@ -217,25 +217,46 @@ def show_cart(message):
     bot.send_message(user,text,reply_markup=kb)
 
 def send_order(message):
-    user=message.chat.id
-    cart=carts.get(user,{})
+    user = message.chat.id
+    username = message.from_user.first_name
 
-    total=0
-    text="🔥 Новый заказ:\n\n"
+    cart = carts.get(user, {})
+    total = 0
 
-    for dish,qty in cart.items():
-        price=find_price(dish)
-        total+=price*qty
-        text+=f"{dish} x{qty}\n"
+    text = (
+        "🍽 НОВЫЙ ДОМАШНИЙ ЗАКАЗ\n"
+        "━━━━━━━━━━━━━━━\n"
+    )
 
-    comment=comments.get(user,"нет")
-    text+=f"\n💬 Комментарий: {comment}"
-    text+=f"\nИТОГО: {total} 💋"
+    for dish, qty in cart.items():
+        price = find_price(dish)
+        total += price * qty
+        text += f"🍴 {dish} × {qty}\n"
 
-    bot.send_message(ADMIN_ID,text)
-    bot.send_message(user,"✅ Заказ отправлен ❤️")
+    text += f"\n💰 Итого: {total} 🤗"
 
-    carts[user]={}
+    comment = comments.get(user, "нет")
+    text += f"\n💬 Комментарий: {comment}"
+
+    text += (
+        "\n━━━━━━━━━━━━━━━\n"
+        f"👤 Клиент: {username}\n"
+        f"🆔 ID: {user}"
+    )
+
+    # кнопка ответа клиенту
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(
+            "💬 Написать клиенту",
+            url=f"tg://user?id={user}"
+        )
+    )
+
+    bot.send_message(ADMIN_ID, text, reply_markup=kb)
+    bot.send_message(user, "✅ Заказ отправлен ❤️")
+
+    carts[user] = {}
 
 @bot.message_handler(func=lambda m: m.chat.id in waiting_comment)
 def get_comment(message):
